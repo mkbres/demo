@@ -1,0 +1,5 @@
+# Deny access to name-of-the-file.html
+<files name-of-the-file.html>
+Order allow,deny
+Deny from all
+</files>

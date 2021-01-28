@@ -1,0 +1,154 @@
+Let's talk about .htaccess file 
+How can we use it to :
+- protect files
+- protect directories
+- allow or deny access 
+- redirect
+- password protect a directory
+- deny IP address
+- hotlinking
+
+Very important. Always have a backup of your files and after adding a new rule, test and see if it works. This way you'll prevent a lot of server internal errors, or if they do occur, you know which rule is not in agreement with your server.
+So, backup and add rule/test, add rule/test, add rule/test.
+
+Of course this .htaccess file can do so much more but let's stick to basics.
+I will not write an entire article saying next to nothing so if you feel that some info is missing, feel free to let me know.
+
+What is .htaccess?
+
+".htaccess is a configuration file for use on web servers running the Apache Web Server software. When a .htaccess file is placed in a directory which is in turn 'loaded via the Apache Web Server', then the .htaccess file is detected and executed by the Apache Web Server software. These .htaccess files can be used to alter the configuration of the Apache Web Server software to enable/disable additional functionality and features that the Apache Web Server software has to offer. These facilities include basic redirect functionality, for instance if a 404 file not found error occurs, or for more advanced functions such as content password protection or image hot link prevention."
+
+My simplified interpretation: It is a "special file" on your host, sometimes hidden, sometimes visible, or (depending on your hosting provider) it simply isn't there... which modifies functionality of your host when certain actions are triggered.
+
+Where is .htaccess file located?
+Location. Check to see if your .htaccess is on your host.
+There are two simple methods to see if this file is there.
+One is by searching for it via cPanel > File Manager > root of your host > public_html directory (yea, all folders on a host are called directories)
+<image>
+(your cPanel might look different than mine but simply look for the File Manager)
+If you can't see .htaccess file, in the top right corner you'll see Settings button. Click on it and select the checkbox for Show Hidden Files (dotfiles)
+Done that and still no .htaccess file? Simply create one.
+Create a new file with Notepad (or any plain-text editor) and upon saving type .htaccess  don't forget the dot.
+Yes is that simple.
+Upload the file on your host and that's it. you have an .htaccess file ready to serve your needs.
+
+The second method is using FileZilla ftp client.
+Use your credentials to access the public_html directory of your host, sometimes based on your host, this directory can have other names like www, hdocs or whatever inspired name your hosting provider named it.
+If .htaccess file is visible than you're lucky, you can right click and view/edit it. If not visible, click the Server tab on FileZilla interface (up) and select Force showing hidden files option.
+Now, if there is a hidden file, you'll see it, if not, just create one following above suggestion and upload it to your host via FileZilla ftp client.
+<image>
+
+Don't scratch your head yet. These were the easy steps.
+Content of .htaccess file is the following step and please follow these suggestions to the letter. Case sensitive like.
+
+Here are a few lines and rules you might want to use:
+
+Protect files.
+Protect .htaccess file from hackers trying to write new rules
+
+<files ~ "^.*\.([Hh][Tt][Aa])">
+order allow,deny
+deny from all
+satisfy all
+</files>
+
+Need to add a rule to deny access to another file? Use this
+
+# Deny access to name-of-the-file.html
+<files name-of-the-file.html>
+Order allow,deny
+Deny from all
+</files>
+
+Replace name-of-the-file.html with the file you don't want to be accessed.
+
+Disable PHP execution
+Simplified, if a hacker somehow uploads a php script or web page on your host. The execution of this malicious file or code will not run. 
+ 
+<Files *.php>
+deny from all
+</Files>
+
+or
+
+# Deny PHP files execution
+<FilesMatch “\.(php|php\.)$”>
+Order Allow,Deny
+Deny from all
+</FilesMatch>
+
+Now, there's a version of deny php execution for resources directories. For example your website is using .php files and not .html, the above code will affect those files with .php extension so a lot of internal server errors will popup. Instead/ to avoid this situation, protect PHP execution only on images directory, css directory or any other directory which doesn't have/require php files. Yup, your images folder should not have php files in it. Anyway. Create a new .htaccess file, add the rule below and upload it in your resources directory.
+
+# Disable access to all file types except the following
+Order deny,allow
+Deny from all
+<Files ~ ".(xml|css|js|jpe?g|png|gif|pdf|docx|rtf|odf|zip|rar)$">
+Allow from all
+</Files>
+ 
+Hot-linking.
+Protect against "bandwidth theft" . Already mentioned about the term but here's the .htaccess version
+
+RewriteEngine on
+RewriteCond %{HTTP_REFERER} !^$
+RewriteCond %{HTTP_REFERER} !^http://(www\.)?your-website.com/.*$ [NC]
+RewriteRule \.(gif|jpg|css)$ - [F]
+
+The above rules is instructing Apache Web Server to block all links to '.gif', '.jpg' and '.css' files which are not from the domain name 'http://your-website.com/'. Add this rule in your .htaccess file and don't forget to replace 'your-website.com' with your web site address before saving the file.
+
+Prevent hotlinking and display image
+
+RewriteEngine on
+RewriteCond %{HTTP_REFERER} !^$
+RewriteCond %{HTTP_REFERER} !^http://(www\.)?your-website.com/.*$ [NC]
+RewriteRule \.(gif|jpg)$ http://your-website.com/dont.jpg [R,L]
+
+The above rule is almost similar with the previous one but in addition it will display an image 
+
+You can also protect your host from hackers uploading images with infected scripts. This is a common way of getting through to your web server and ftp
+
+deny from all
+    <Files ~ "^\w+\.(gif|jpe?g|png)$">
+    order deny,allow
+    allow from all
+    </Files>
+	
+Block access to directories.
+I've already mentioned about how an individual can access the root path of a directory and see its content if it is not protected 
+This is the .htaccess version 
+
+Options All -Indexes
+#Disables all directory browsing
+
+Block bad bots by IP
+Replace the IP_Address with IPs, if you need more deny rules simply copy the entire line, hit enter key one (a new line) and paste the copied rule, again, change the IP. You can add as many as you want, there's no limit
+
+<Limit GET POST>
+order allow,deny
+deny from IP_ADDRESS
+deny from IP_ADDRESS
+allow from all
+</Limit>
+
+Redirects
+Using .htaccess to redirect
+HTTP to HTTPS redirect. If you have an SSL certificate installed and your web address of your website is still showing http://your-website.com/ then you can use this rule
+
+#Redirect http to https
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+Old directory to New directory
+if a visitor requests a file located in the directory 'old_dir', then to display the document 'index.html' located in the directory 'new_dir'
+
+Redirect /old_dir/ https://your-website.com/new_dir/index.html
+
+Redirect 404 to Homepage using .htaccess
+Apache provides ErrorDocument directive to help you catch all types of error responses. If you want to redirect all 404 errors to a specific web page (e.g http://your-website.com/error.html) just add the following rule to your .htaccess file.
+
+ErrorDocument 404 http://your-website.com/error.html
+
+Again, very important. Always have a backup of your files and after adding a new rule, test and see if it works. This way you'll prevent a lot of server internal errors, or if they do occur, you know which rule is not in agreement with your server.
+So, backup and add rule/test, add rule/test, add rule/test.
+	

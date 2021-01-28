@@ -1,0 +1,1 @@
+Redirect /old_dir/ https://your-website.com/new_dir/index.html
